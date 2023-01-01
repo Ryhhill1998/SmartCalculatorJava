@@ -13,11 +13,12 @@ public class Main {
             } else if (input.equals("/help")) {
                 System.out.println("The program calculates the sum of numbers");
             } else {
-                try {
-                    int[] numbers = parseInput(input);
+                String[] splitInput = input.split(" ");
+
+                if (inputIsValid(splitInput)) {
+                    int[] numbers = parseInput(splitInput);
                     int sum = calculateSum(numbers);
                     System.out.println(sum);
-                } catch (NumberFormatException ignored) {
                 }
             }
         }
@@ -30,8 +31,20 @@ public class Main {
         return scanner.nextLine();
     }
 
-    private static int[] parseInput(String input) {
-        String[] splitInput = input.split(" ");
+    private static boolean inputIsValid(String[] splitInput) {
+        boolean isValid = true;
+
+        for (int i = 0; i < splitInput.length; i++) {
+            if (!splitInput[i].matches("[-0-9]+")) {
+                isValid = false;
+                break;
+            }
+        }
+
+        return isValid;
+    }
+
+    private static int[] parseInput(String[] splitInput) {
         int[] parsedInput = new int[splitInput.length];
 
         for (int i = 0; i < splitInput.length; i++) {
