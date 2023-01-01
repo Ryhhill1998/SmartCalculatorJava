@@ -10,14 +10,13 @@ public class Main {
 
             if (input.equals("/exit")) {
                 quit = true;
+            } else if (input.equals("/help")) {
+                System.out.println("The program calculates the sum of numbers");
             } else {
                 try {
                     int[] numbers = parseInput(input);
-                    if (numbers.length == 1) {
-                        System.out.println(numbers[0]);
-                    } else {
-                        System.out.println(numbers[0] + numbers[1]);
-                    }
+                    int sum = calculateSum(numbers);
+                    System.out.println(sum);
                 } catch (NumberFormatException ignored) {
                 }
             }
@@ -40,5 +39,15 @@ public class Main {
         }
 
         return parsedInput;
+    }
+
+    private static int calculateSum(int[] numbers) {
+        int sum = 0;
+
+        for (int num : numbers) {
+            sum += num;
+        }
+
+        return sum;
     }
 }
