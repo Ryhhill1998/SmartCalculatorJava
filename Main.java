@@ -65,48 +65,60 @@ public class Main {
             } else if (operationsMatcher.matches()) {
                 operations.offer(entry);
             } else {
-                String[] splitOperations = entry.split("");
-                int minusCount = 0;
-
-                for (String op : splitOperations) {
-                    if (op.equals("-")) {
-                        minusCount++;
-                    }
-                }
-
-                String evaluatedOperation = "+";
-
-                if (minusCount > 0) {
-                    if (minusCount % 2 != 0) {
-                        evaluatedOperation = "-";
-                    }
-                }
-
-                operations.offer(evaluatedOperation);
+                operations.offer(evaluateOperation(entry));
             }
         }
 
-        int lhs = 0;
+        Integer result = evaluateExpression(numbers, operations);
 
-        if (!numbers.isEmpty()) {
-            lhs = numbers.poll();
+        if (result == null) {
+            System.out.println("Invalid expression");
+        } else {
+            System.out.println(result);
+        }
+    }
+
+    private static String evaluateOperation(String operation) {
+        String[] splitOperations = operation.split("");
+        int minusCount = 0;
+
+        for (String op : splitOperations) {
+            if (op.equals("-")) {
+                minusCount++;
+            }
         }
 
+        String evaluatedOperation = "+";
+
+        if (minusCount > 0 && minusCount % 2 != 0) {
+            evaluatedOperation = "-";
+        }
+
+        return evaluatedOperation;
+    }
+
+    private static Integer evaluateExpression(Queue<Integer> numbers, Queue<String> operations) {
+        if (numbers.isEmpty()) {
+            return null;
+        }
+
+        Integer result = numbers.poll();
+
         while (!numbers.isEmpty() && !operations.isEmpty()) {
-            int rhs = numbers.poll();
+            int number = numbers.poll();
             String operation = operations.poll();
 
             if (operation.equals("+")) {
-                lhs += rhs;
+                result += number;
             } else {
-                lhs -= rhs;
+                result -= number;
             }
         }
 
         if (!numbers.isEmpty() || !operations.isEmpty()) {
-            System.out.println("Invalid expression");
+            return null;
         } else {
-            System.out.println(lhs);
+            return result;
         }
     }
 }
