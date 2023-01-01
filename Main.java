@@ -4,7 +4,7 @@ import java.util.regex.Pattern;
 
 public class Main {
 
-    private static final Pattern NUMBER_PATTERN = Pattern.compile("^-?[0-9]+");
+    private static final Pattern NUMBER_PATTERN = Pattern.compile("^[+-]?[0-9]+");
     private static final Pattern OPERATIONS_PATTERN = Pattern.compile("[+-]");
     private static final Pattern EXTRA_SPACES_PATTERN = Pattern.compile("\\s+");
 
@@ -14,13 +14,19 @@ public class Main {
         while (!quit) {
             String input = getUserInput();
 
-            if (input.equals("/exit")) {
-                quit = true;
-            } else if (input.equals("/help")) {
-                System.out.println("The program calculates the sum of numbers");
-            } else {
+            if (input.startsWith("/")) {
+                if (input.equals("/exit")) {
+                    quit = true;
+                } else if (input.equals("/help")) {
+                    System.out.println("The program calculates the sum of numbers");
+                } else {
+                    System.out.println("Unknown command");
+                }
+            } else if (!input.isEmpty()) {
                 if (inputIsValid(input)) {
                     processInput(input);
+                } else {
+                    System.out.println("Invalid expression");
                 }
             }
         }
@@ -45,16 +51,6 @@ public class Main {
         return matcher.matches();
     }
 
-    private static int[] parseInput(String[] splitInput) {
-        int[] parsedInput = new int[splitInput.length];
-
-        for (int i = 0; i < splitInput.length; i++) {
-            parsedInput[i] = Integer.parseInt(splitInput[i]);
-        }
-
-        return parsedInput;
-    }
-
     private static void processInput(String input) {
         String[] splitInput = input.split("\\s");
         Queue<Integer> numbers = new LinkedList<>();
@@ -71,13 +67,10 @@ public class Main {
             } else {
                 String[] splitOperations = entry.split("");
                 int minusCount = 0;
-                int plusCount = 0;
 
                 for (String op : splitOperations) {
                     if (op.equals("-")) {
                         minusCount++;
-                    } else {
-                        plusCount++;
                     }
                 }
 
@@ -110,16 +103,10 @@ public class Main {
             }
         }
 
-        System.out.println(lhs);
-    }
-
-    private static int calculateSum(int[] numbers) {
-        int sum = 0;
-
-        for (int num : numbers) {
-            sum += num;
+        if (!numbers.isEmpty() || !operations.isEmpty()) {
+            System.out.println("Invalid expression");
+        } else {
+            System.out.println(lhs);
         }
-
-        return sum;
     }
 }
