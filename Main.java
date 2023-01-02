@@ -5,7 +5,7 @@ import java.util.regex.Pattern;
 public class Main {
 
     private static final Pattern NUMBER_PATTERN = Pattern.compile("^[+-]?[0-9]+");
-    private static final Pattern OPERATIONS_PATTERN = Pattern.compile("[+-]");
+    private static final Pattern OPERATIONS_PATTERN = Pattern.compile("[+-]+");
     private static final Pattern EXTRA_SPACES_PATTERN = Pattern.compile("\\s+");
 
     public static void main(String[] args) {
@@ -23,9 +23,7 @@ public class Main {
                     System.out.println("Unknown command");
                 }
             } else if (!input.isEmpty()) {
-                if (inputIsValid(input)) {
-                    processInput(input);
-                } else {
+                if (!processInput(input)) {
                     System.out.println("Invalid expression");
                 }
             }
@@ -45,37 +43,36 @@ public class Main {
         return text;
     }
 
-    private static boolean inputIsValid(String input) {
-        Pattern pattern = Pattern.compile("[-+0-9\\s]+");
-        Matcher matcher = pattern.matcher(input);
-        return matcher.matches();
-    }
-
-    private static void processInput(String input) {
+    private static boolean processInput(String input) {
         String[] splitInput = input.split("\\s");
         Queue<Integer> numbers = new LinkedList<>();
         Queue<String> operations = new LinkedList<>();
 
-        for (String entry : splitInput) {
+        for (int i = 0; i < splitInput.length; i++) {
+            String entry = splitInput[i];
             Matcher numberMatcher = NUMBER_PATTERN.matcher(entry);
             Matcher operationsMatcher = OPERATIONS_PATTERN.matcher(entry);
+
+            if ((i % 2 == 0 || i == splitInput.length - 1) && !numberMatcher.matches()
+                    || i % 2 != 0 && !operationsMatcher.matches()) {
+                return false;
+            }
 
             if (numberMatcher.matches()) {
                 numbers.offer(Integer.parseInt(entry));
             } else if (operationsMatcher.matches()) {
-                operations.offer(entry);
-            } else {
-                operations.offer(evaluateOperation(entry));
+                if (entry.length() > 1) {
+                    operations.offer(evaluateOperation(entry));
+                } else {
+                    operations.offer(entry);
+                }
             }
         }
 
         Integer result = evaluateExpression(numbers, operations);
+        System.out.println(result);
 
-        if (result == null) {
-            System.out.println("Invalid expression");
-        } else {
-            System.out.println(result);
-        }
+        return true;
     }
 
     private static String evaluateOperation(String operation) {
@@ -102,23 +99,19 @@ public class Main {
             return null;
         }
 
-        Integer result = numbers.poll();
+        int result = numbers.poll();
 
         while (!numbers.isEmpty() && !operations.isEmpty()) {
             int number = numbers.poll();
             String operation = operations.poll();
 
-            if (operation.equals("+")) {
+            if ("+".equals(operation)) {
                 result += number;
             } else {
                 result -= number;
             }
         }
 
-        if (!numbers.isEmpty() || !operations.isEmpty()) {
-            return null;
-        } else {
-            return result;
-        }
+        return result;
     }
 }
