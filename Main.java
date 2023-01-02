@@ -69,9 +69,7 @@ public class Main {
             }
         }
 
-        Integer result = evaluateExpression(numbers, operations);
-        System.out.println(result);
-
+        evaluateExpression(numbers, operations);
         return true;
     }
 
@@ -94,9 +92,9 @@ public class Main {
         return evaluatedOperation;
     }
 
-    private static Integer evaluateExpression(Queue<Integer> numbers, Queue<String> operations) {
+    private static void evaluateExpression(Queue<Integer> numbers, Queue<String> operations) {
         if (numbers.isEmpty()) {
-            return null;
+            return;
         }
 
         int result = numbers.poll();
@@ -112,6 +110,6 @@ public class Main {
             }
         }
 
-        return result;
+        System.out.println(result);
     }
 }
