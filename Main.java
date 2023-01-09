@@ -14,27 +14,33 @@ public class Main {
     private static final Map<String, Integer> variableMap = new HashMap<>();
 
     public static void main(String[] args) {
-        boolean quit = false;
+//        boolean quit = false;
+//
+//        while (!quit) {
+//            String input = getUserInput();
+//
+//            if (input.startsWith("/")) {
+//                if (input.equals("/exit")) {
+//                    quit = true;
+//                } else if (input.equals("/help")) {
+//                    System.out.println("The program calculates the sum of numbers");
+//                } else {
+//                    System.out.println("Unknown command");
+//                }
+//            } else if (isVariableAssignment(input)) {
+//                createVariable(input);
+//            } else if (!input.isEmpty()) {
+//                processInput(input);
+//            }
+//        }
+//
+//        System.out.println("Bye!");
 
-        while (!quit) {
-            String input = getUserInput();
-
-            if (input.startsWith("/")) {
-                if (input.equals("/exit")) {
-                    quit = true;
-                } else if (input.equals("/help")) {
-                    System.out.println("The program calculates the sum of numbers");
-                } else {
-                    System.out.println("Unknown command");
-                }
-            } else if (isVariableAssignment(input)) {
-                createVariable(input);
-            } else if (!input.isEmpty()) {
-                processInput(input);
-            }
-        }
-
-        System.out.println("Bye!");
+        String infixExpression = "1 +++ 2 * 3 -- 4";
+        String processedExpression = processInput(infixExpression);
+        String postfixExpression = convertInfixExpressionToPostfix(processedExpression);
+        System.out.println(postfixExpression);
+        System.out.println(computePostfixExpression(postfixExpression));
     }
 
     private static boolean isVariableAssignment(String input) {
@@ -94,41 +100,26 @@ public class Main {
         return text;
     }
 
-    private static void processInput(String input) {
-        String[] splitInput = input.split("\\s");
-        Queue<Integer> values = new LinkedList<>();
-        Queue<String> operations = new LinkedList<>();
+    private static String processInput(String input) {
+        String[] splitInput = input.replaceAll("\\s", "").split("");
+        StringBuilder output = new StringBuilder();
+        StringBuilder plusMinusSequence = new StringBuilder();
 
         for (int i = 0; i < splitInput.length; i++) {
-            String entry = splitInput[i];
-            Matcher valueMatcher = VALUE_PATTERN.matcher(entry);
-            Matcher operationsMatcher = OPERATIONS_PATTERN.matcher(entry);
+            String character = splitInput[i];
 
-            if (i % 2 == 0) {
-                if (valueMatcher.matches()) {
-                    values.offer(Integer.parseInt(entry));
-                } else {
-                    Integer value = variableMap.get(entry);
-                    if (value == null) {
-                        System.out.println("Unknown variable");
-                        return;
-                    } else {
-                        values.offer(value);
-                    }
-                }
-            } else if (i != splitInput.length - 1 && operationsMatcher.matches()) {
-                if (entry.length() > 1) {
-                    operations.offer(evaluateOperation(entry));
-                } else {
-                    operations.offer(entry);
+            if (character.equals("+") || character.equals("-")) {
+                plusMinusSequence.append(character);
+
+                if (i != splitInput.length - 1 && isDigit(splitInput[i + 1])) {
+                    output.append(evaluateOperation(plusMinusSequence.toString()));
                 }
             } else {
-                System.out.println("Invalid expression");
-                return;
+                output.append(character);
             }
         }
 
-        evaluateExpression(values, operations);
+        return output.toString();
     }
 
     private static String evaluateOperation(String operation) {
@@ -150,24 +141,92 @@ public class Main {
         return evaluatedOperation;
     }
 
-    private static void evaluateExpression(Queue<Integer> numbers, Queue<String> operations) {
-        if (numbers.isEmpty()) {
-            return;
-        }
+    private static String convertInfixExpressionToPostfix(String expression) {
+        StringBuilder output = new StringBuilder();
+        StringBuilder digits = new StringBuilder();
+        Stack<String> stack = new Stack<>();
+        String[] splitExpression = expression.replaceAll("\\s", "").split("");
 
-        int result = numbers.poll();
 
-        while (!numbers.isEmpty() && !operations.isEmpty()) {
-            int number = numbers.poll();
-            String operation = operations.poll();
+        HashMap<String, Integer> operatorPrecedence = new HashMap<>();
+        operatorPrecedence.put("*", 2);
+        operatorPrecedence.put("/", 2);
+        operatorPrecedence.put("+", 1);
+        operatorPrecedence.put("-", 1);
 
-            if ("+".equals(operation)) {
-                result += number;
-            } else {
-                result -= number;
+        for (int i = 0; i < splitExpression.length; i++) {
+            String op = splitExpression[i];
+
+            if (!op.isBlank()) {
+                if (isDigit(op)) {
+                    digits.append(op);
+
+                    if (i == splitExpression.length - 1 || !isDigit(splitExpression[i + 1])) {
+                        output.append(digits).append(" ");
+                        digits.setLength(0);
+                    }
+                } else {
+                    if (stack.isEmpty() || stack.peek().equals("(") || op.equals("(")) {
+                        stack.push(op);
+                    } else if (op.equals(")")) {
+                        while (!stack.peek().equals("(") && !stack.isEmpty()) {
+                            output.append(stack.pop()).append(" ");
+                        }
+
+                        if (!stack.isEmpty()) {
+                            stack.pop();
+                        }
+                    } else if (operatorPrecedence.get(op) > operatorPrecedence.get(stack.peek())) {
+                        stack.push(op);
+                    } else {
+                        while (!stack.isEmpty() && operatorPrecedence.get(op) <= operatorPrecedence.get(stack.peek())) {
+                            output.append(stack.pop()).append(" ");
+                        }
+
+                        stack.push(op);
+                    }
+                }
             }
         }
 
-        System.out.println(result);
+        while (!stack.isEmpty()) {
+            output.append(stack.pop()).append(" ");
+        }
+
+        return output.toString();
+    }
+
+    private static int computePostfixExpression(String expression) {
+        Stack<Integer> numbers = new Stack<>();
+        String[] splitExpression = expression.split(" ");
+
+        for (String op : splitExpression) {
+            if (isDigit(op)) {
+                numbers.push(Integer.parseInt(op));
+            } else {
+                int rhs = numbers.pop();
+                int lhs = numbers.pop();
+                int result = 0;
+
+                switch(op) {
+                    case "+":
+                        result = lhs + rhs;
+                        break;
+                    case "-":
+                        result = lhs - rhs;
+                        break;
+                    case "*":
+                        result = lhs * rhs;
+                        break;
+                    case "/":
+                        result = lhs / rhs;
+                        break;
+                }
+
+                numbers.push(result);
+            }
+        }
+
+        return numbers.pop();
     }
 }
