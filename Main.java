@@ -4,10 +4,8 @@ import java.util.regex.Pattern;
 
 public class Main {
 
-    private static final Pattern DIGIT_PATTERN = Pattern.compile("\\d+");
     private static final Pattern LETTER_PATTERN = Pattern.compile("[a-zA-Z]+");
     private static final Pattern VALUE_PATTERN = Pattern.compile("^[+-]?\\d+");
-    private static final Pattern OPERATIONS_PATTERN = Pattern.compile("[+-]+");
     private static final Pattern EXTRA_SPACES_PATTERN = Pattern.compile("\\s+");
     private static final Pattern VARIABLE_ASSIGNMENT_PATTERN = Pattern.compile(".+=.+");
     private static final Pattern VARIABLE_NAME_PATTERN = Pattern.compile("[a-zA-Z]+");
@@ -30,12 +28,25 @@ public class Main {
             } else if (isVariableAssignment(input)) {
                 createVariable(input);
             } else if (!input.isEmpty()) {
-                String processedInput = processInput(input);
-                evaluateInput(processedInput);
+                try {
+                    if (inputContainsVariablePattern(input)) {
+                        input = convertVariablesToValues(input);
+                    }
+
+                    String processedInput = processInput(input);
+                    evaluateInput(processedInput);
+                } catch (NullPointerException npe) {
+                    System.out.println("Invalid identifier");
+                }
             }
         }
 
         System.out.println("Bye!");
+    }
+
+    private static boolean inputContainsVariablePattern(String input) {
+        Matcher matcher = LETTER_PATTERN.matcher(input);
+        return matcher.find();
     }
 
     private static boolean isVariableAssignment(String input) {
@@ -71,7 +82,7 @@ public class Main {
     }
 
     private static boolean isDigit(String input) {
-        Matcher matcher = DIGIT_PATTERN.matcher(input);
+        Matcher matcher = VALUE_PATTERN.matcher(input);
         return matcher.matches();
     }
 
@@ -93,6 +104,23 @@ public class Main {
         Matcher matcher = EXTRA_SPACES_PATTERN.matcher(text);
         text = matcher.replaceAll(" ");
         return text;
+    }
+
+    private static String convertVariablesToValues(String input) {
+        String[] splitInput = input.replaceAll("\\s", "").split("");
+        StringBuilder output = new StringBuilder();
+
+        for (int i = 0; i < splitInput.length; i++) {
+            String character = splitInput[i];
+
+            if (variableMap.containsKey(character)) {
+                output.append(variableMap.get(character));
+            } else {
+                output.append(character);
+            }
+        }
+
+        return output.toString();
     }
 
     private static String processInput(String input) {
@@ -156,7 +184,6 @@ public class Main {
         Stack<String> stack = new Stack<>();
         String[] splitExpression = expression.replaceAll("\\s", "").split("");
 
-
         HashMap<String, Integer> operatorPrecedence = new HashMap<>();
         operatorPrecedence.put("*", 2);
         operatorPrecedence.put("/", 2);
@@ -167,7 +194,7 @@ public class Main {
             String op = splitExpression[i];
 
             if (!op.isBlank()) {
-                if (isDigit(op)) {
+                if (isDigit(op) || (op.equals("-") && i == 0)) {
                     digits.append(op);
 
                     if (i == splitExpression.length - 1 || !isDigit(splitExpression[i + 1])) {
@@ -185,10 +212,10 @@ public class Main {
                         if (!stack.isEmpty()) {
                             stack.pop();
                         }
-                    } else if (operatorPrecedence.get(op) > operatorPrecedence.get(stack.peek())) {
+                    } else if (operatorPrecedence.get(op) > operatorPrecedence.getOrDefault(stack.peek(), 0)) {
                         stack.push(op);
                     } else {
-                        while (!stack.isEmpty() && operatorPrecedence.get(op) <= operatorPrecedence.get(stack.peek())) {
+                        while (!stack.isEmpty() && operatorPrecedence.get(op) <= operatorPrecedence.getOrDefault(stack.peek(), 0)) {
                             output.append(stack.pop()).append(" ");
                         }
 
