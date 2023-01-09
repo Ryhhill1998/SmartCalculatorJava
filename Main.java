@@ -14,33 +14,29 @@ public class Main {
     private static final Map<String, Integer> variableMap = new HashMap<>();
 
     public static void main(String[] args) {
-//        boolean quit = false;
-//
-//        while (!quit) {
-//            String input = getUserInput();
-//
-//            if (input.startsWith("/")) {
-//                if (input.equals("/exit")) {
-//                    quit = true;
-//                } else if (input.equals("/help")) {
-//                    System.out.println("The program calculates the sum of numbers");
-//                } else {
-//                    System.out.println("Unknown command");
-//                }
-//            } else if (isVariableAssignment(input)) {
-//                createVariable(input);
-//            } else if (!input.isEmpty()) {
-//                processInput(input);
-//            }
-//        }
-//
-//        System.out.println("Bye!");
+        boolean quit = false;
 
-        String infixExpression = "1 +++ 2 * 3 -- 4";
-        String processedExpression = processInput(infixExpression);
-        String postfixExpression = convertInfixExpressionToPostfix(processedExpression);
-        System.out.println(postfixExpression);
-        System.out.println(computePostfixExpression(postfixExpression));
+        while (!quit) {
+            String input = getUserInput();
+
+            if (input.startsWith("/")) {
+                if (input.equals("/exit")) {
+                    quit = true;
+                } else if (input.equals("/help")) {
+                    System.out.println("The program calculates the sum of numbers");
+                } else {
+                    System.out.println("Unknown command");
+                }
+            } else if (isVariableAssignment(input)) {
+                createVariable(input);
+            } else if (!input.isEmpty()) {
+                String processedInput = processInput(input);
+                int result = evaluateInput(processedInput);
+                System.out.println(result);
+            }
+        }
+
+        System.out.println("Bye!");
     }
 
     private static boolean isVariableAssignment(String input) {
@@ -139,6 +135,11 @@ public class Main {
         }
 
         return evaluatedOperation;
+    }
+
+    private static int evaluateInput(String input) {
+        String postfixExpression = convertInfixExpressionToPostfix(input);
+        return computePostfixExpression(postfixExpression);
     }
 
     private static String convertInfixExpressionToPostfix(String expression) {
