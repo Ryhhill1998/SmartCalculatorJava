@@ -106,9 +106,12 @@ public class Main {
             if (character.equals("+") || character.equals("-")) {
                 plusMinusSequence.append(character);
 
-                if (i != splitInput.length - 1 && isDigit(splitInput[i + 1])) {
+                if (i != splitInput.length - 1 && !splitInput[i + 1].equals("+") && !splitInput[i + 1].equals("-")) {
                     output.append(evaluateOperation(plusMinusSequence.toString()));
                 }
+            } else if (variableMap.containsKey(character)) {
+                output.append(variableMap.get(character));
+                plusMinusSequence.setLength(0);
             } else {
                 output.append(character);
                 plusMinusSequence.setLength(0);
