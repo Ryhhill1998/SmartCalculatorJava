@@ -31,8 +31,7 @@ public class Main {
                 createVariable(input);
             } else if (!input.isEmpty()) {
                 String processedInput = processInput(input);
-                int result = evaluateInput(processedInput);
-                System.out.println(result);
+                evaluateInput(processedInput);
             }
         }
 
@@ -112,6 +111,7 @@ public class Main {
                 }
             } else {
                 output.append(character);
+                plusMinusSequence.setLength(0);
             }
         }
 
@@ -137,9 +137,14 @@ public class Main {
         return evaluatedOperation;
     }
 
-    private static int evaluateInput(String input) {
-        String postfixExpression = convertInfixExpressionToPostfix(input);
-        return computePostfixExpression(postfixExpression);
+    private static void evaluateInput(String input) {
+        try {
+            String postfixExpression = convertInfixExpressionToPostfix(input);
+            int result = computePostfixExpression(postfixExpression);
+            System.out.println(result);
+        } catch (EmptyStackException e) {
+            System.out.println("Invalid expression");
+        }
     }
 
     private static String convertInfixExpressionToPostfix(String expression) {
