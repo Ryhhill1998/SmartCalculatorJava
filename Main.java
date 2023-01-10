@@ -28,18 +28,14 @@ public class Main {
                     System.out.println("Unknown command");
                 }
             } else if (isVariableAssignment(input)) {
-                try {
-                    createIntVariable(input);
-                } catch (NumberFormatException e) {
-                    createBigIntVariable(input);
-                }
+                createVariable(input);
             } else if (!input.isEmpty()) {
                 if (inputContainsVariablePattern(input)) {
                     input = convertVariablesToValues(input);
                 }
 
                 if (input == null) {
-                    System.out.println("Variable not found");
+                    System.out.println("Unknown variable");
                 } else {
                     String processedInput = processInput(input);
                     evaluateInput(processedInput);
@@ -51,7 +47,7 @@ public class Main {
     }
 
     private static boolean inputContainsBigInteger(String input) {
-        String[] splitInput = input.replaceAll("\\s", "").split("");
+        String[] splitInput = input.split("\\s");
 
         boolean containsBigInt = false;
 
@@ -89,7 +85,7 @@ public class Main {
         return matcher.matches();
     }
 
-    private static void createIntVariable(String input) {
+    private static void createVariable(String input) {
         input = input.replaceAll("\\s", "");
         String[] splitInput = input.split("=");
         String variableName = splitInput[0];
@@ -98,35 +94,26 @@ public class Main {
         if (!variableNameIsValid(variableName)) {
             System.out.println("Invalid identifier");
         } else if (isDigit(variableValue)) {
-            updateIntVariableMap(variableName, Integer.parseInt(variableValue));
-        } else if (isAlpha(variableValue)) {
-            Integer value = intVariableMap.get(variableValue);
-            if (value != null) {
-                updateIntVariableMap(variableName, value);
+            if (stringNumberIsBigInt(variableValue)) {
+                updateBigIntVariableMap(variableName, new BigInteger(variableValue));
             } else {
-                System.out.println("Invalid assignment");
+                updateIntVariableMap(variableName, Integer.parseInt(variableValue));
             }
-        } else {
-            System.out.println("Invalid assignment");
-        }
-    }
-
-    private static void createBigIntVariable(String input) {
-        input = input.replaceAll("\\s", "");
-        String[] splitInput = input.split("=");
-        String variableName = splitInput[0];
-        String variableValue = splitInput[1];
-
-        if (!variableNameIsValid(variableName)) {
-            System.out.println("Invalid identifier");
-        } else if (isDigit(variableValue)) {
-            updateBigIntVariableMap(variableName, new BigInteger(variableValue));
         } else if (isAlpha(variableValue)) {
-            BigInteger value = bigIntVariableMap.get(variableValue);
-            if (value != null) {
-                updateBigIntVariableMap(variableName, value);
+            if (bigIntVariableMap.containsKey(variableValue)) {
+                BigInteger value = bigIntVariableMap.get(variableValue);
+                if (value != null) {
+                    updateBigIntVariableMap(variableName, value);
+                } else {
+                    System.out.println("Invalid assignment");
+                }
             } else {
-                System.out.println("Invalid assignment");
+                Integer value = intVariableMap.get(variableValue);
+                if (value != null) {
+                    updateIntVariableMap(variableName, value);
+                } else {
+                    System.out.println("Invalid assignment");
+                }
             }
         } else {
             System.out.println("Invalid assignment");
@@ -170,7 +157,7 @@ public class Main {
                 .split("\\s");
 
         for (int i = 0; i < splitInput.length; i++) {
-            String character = splitInput[i].toLowerCase();
+            String character = splitInput[i];
 
             if (intVariableMap.containsKey(character)) {
                 int value = intVariableMap.get(character);
