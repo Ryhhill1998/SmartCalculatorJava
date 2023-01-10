@@ -34,15 +34,15 @@ public class Main {
                     createBigIntVariable(input);
                 }
             } else if (!input.isEmpty()) {
-                try {
-                    if (inputContainsVariablePattern(input)) {
-                        input = convertVariablesToValues(input);
-                    }
+                if (inputContainsVariablePattern(input)) {
+                    input = convertVariablesToValues(input);
+                }
 
+                if (input == null) {
+                    System.out.println("Variable not found");
+                } else {
                     String processedInput = processInput(input);
                     evaluateInput(processedInput);
-                } catch (NullPointerException npe) {
-                    System.out.println("No such variable exists");
                 }
             }
         }
@@ -51,7 +51,8 @@ public class Main {
     }
 
     private static boolean inputContainsBigInteger(String input) {
-        String[] splitInput = input.replaceAll("\\s", "").split("[+-/*()]+");
+        String[] splitInput = input.replaceAll("\\s", "").split("");
+
         boolean containsBigInt = false;
 
         for (int i = 0; i < splitInput.length; i++) {
@@ -164,22 +165,25 @@ public class Main {
     }
 
     private static String convertVariablesToValues(String input) {
-        String[] splitInput = input.replaceAll("\\s", "").split("");
-        StringBuilder output = new StringBuilder();
+        String[] splitInput = input.replaceAll("[-+*/()\\s\\d]+", " ")
+                .trim()
+                .split("\\s");
 
         for (int i = 0; i < splitInput.length; i++) {
-            String character = splitInput[i];
+            String character = splitInput[i].toLowerCase();
 
             if (intVariableMap.containsKey(character)) {
-                output.append(intVariableMap.get(character));
+                int value = intVariableMap.get(character);
+                input = input.replaceAll(character, String.valueOf(value));
             } else if (bigIntVariableMap.containsKey(character)) {
-                output.append(bigIntVariableMap.get(character));
+                BigInteger value = bigIntVariableMap.get(character);
+                input = input.replaceAll(character, String.valueOf(value));
             } else {
-                output.append(character);
+                return null;
             }
         }
 
-        return output.toString();
+        return input;
     }
 
     private static String processInput(String input) {
