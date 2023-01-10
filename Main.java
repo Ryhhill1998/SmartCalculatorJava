@@ -1,3 +1,4 @@
+import java.math.BigInteger;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -9,7 +10,8 @@ public class Main {
     private static final Pattern EXTRA_SPACES_PATTERN = Pattern.compile("\\s+");
     private static final Pattern VARIABLE_ASSIGNMENT_PATTERN = Pattern.compile(".+=.+");
     private static final Pattern VARIABLE_NAME_PATTERN = Pattern.compile("[a-zA-Z]+");
-    private static final Map<String, Integer> variableMap = new HashMap<>();
+    private static final Map<String, Integer> intVariableMap = new HashMap<>();
+    private static final Map<String, BigInteger> bigIntVariableMap = new HashMap<>();
 
     public static void main(String[] args) {
         boolean quit = false;
@@ -26,7 +28,11 @@ public class Main {
                     System.out.println("Unknown command");
                 }
             } else if (isVariableAssignment(input)) {
-                createVariable(input);
+                try {
+                    createIntVariable(input);
+                } catch (NumberFormatException e) {
+                    createBigIntVariable(input);
+                }
             } else if (!input.isEmpty()) {
                 try {
                     if (inputContainsVariablePattern(input)) {
@@ -36,12 +42,35 @@ public class Main {
                     String processedInput = processInput(input);
                     evaluateInput(processedInput);
                 } catch (NullPointerException npe) {
-                    System.out.println("Invalid identifier");
+                    System.out.println("No such variable exists");
                 }
             }
         }
 
         System.out.println("Bye!");
+    }
+
+    private static boolean inputContainsBigInteger(String input) {
+        String[] splitInput = input.replaceAll("\\s", "").split("[+-/*()]+");
+        boolean containsBigInt = false;
+
+        for (int i = 0; i < splitInput.length; i++) {
+            if (stringNumberIsBigInt(splitInput[i])) {
+                containsBigInt = true;
+                break;
+            }
+        }
+
+        return containsBigInt;
+    }
+
+    private static boolean stringNumberIsBigInt(String number) {
+        try {
+            Integer.parseInt(number);
+            return false;
+        } catch (NumberFormatException e) {
+            return true;
+        }
     }
 
     private static boolean inputContainsVariablePattern(String input) {
@@ -59,7 +88,7 @@ public class Main {
         return matcher.matches();
     }
 
-    private static void createVariable(String input) {
+    private static void createIntVariable(String input) {
         input = input.replaceAll("\\s", "");
         String[] splitInput = input.split("=");
         String variableName = splitInput[0];
@@ -68,11 +97,33 @@ public class Main {
         if (!variableNameIsValid(variableName)) {
             System.out.println("Invalid identifier");
         } else if (isDigit(variableValue)) {
-            updateVariableMap(variableName, Integer.parseInt(variableValue));
+            updateIntVariableMap(variableName, Integer.parseInt(variableValue));
         } else if (isAlpha(variableValue)) {
-            Integer value = variableMap.get(variableValue);
+            Integer value = intVariableMap.get(variableValue);
             if (value != null) {
-                updateVariableMap(variableName, value);
+                updateIntVariableMap(variableName, value);
+            } else {
+                System.out.println("Invalid assignment");
+            }
+        } else {
+            System.out.println("Invalid assignment");
+        }
+    }
+
+    private static void createBigIntVariable(String input) {
+        input = input.replaceAll("\\s", "");
+        String[] splitInput = input.split("=");
+        String variableName = splitInput[0];
+        String variableValue = splitInput[1];
+
+        if (!variableNameIsValid(variableName)) {
+            System.out.println("Invalid identifier");
+        } else if (isDigit(variableValue)) {
+            updateBigIntVariableMap(variableName, new BigInteger(variableValue));
+        } else if (isAlpha(variableValue)) {
+            BigInteger value = bigIntVariableMap.get(variableValue);
+            if (value != null) {
+                updateBigIntVariableMap(variableName, value);
             } else {
                 System.out.println("Invalid assignment");
             }
@@ -91,8 +142,14 @@ public class Main {
         return matcher.matches();
     }
 
-    private static void updateVariableMap(String key, int value) {
-        variableMap.put(key, value);
+    private static void updateIntVariableMap(String key, int value) {
+        bigIntVariableMap.remove(key);
+        intVariableMap.put(key, value);
+    }
+
+    private static void updateBigIntVariableMap(String key, BigInteger value) {
+        intVariableMap.remove(key);
+        bigIntVariableMap.put(key, value);
     }
 
     private static String getUserInput() {
@@ -113,8 +170,10 @@ public class Main {
         for (int i = 0; i < splitInput.length; i++) {
             String character = splitInput[i];
 
-            if (variableMap.containsKey(character)) {
-                output.append(variableMap.get(character));
+            if (intVariableMap.containsKey(character)) {
+                output.append(intVariableMap.get(character));
+            } else if (bigIntVariableMap.containsKey(character)) {
+                output.append(bigIntVariableMap.get(character));
             } else {
                 output.append(character);
             }
@@ -137,9 +196,6 @@ public class Main {
                 if (i != splitInput.length - 1 && !splitInput[i + 1].equals("+") && !splitInput[i + 1].equals("-")) {
                     output.append(evaluateOperation(plusMinusSequence.toString()));
                 }
-            } else if (variableMap.containsKey(character)) {
-                output.append(variableMap.get(character));
-                plusMinusSequence.setLength(0);
             } else {
                 output.append(character);
                 plusMinusSequence.setLength(0);
@@ -171,8 +227,13 @@ public class Main {
     private static void evaluateInput(String input) {
         try {
             String postfixExpression = convertInfixExpressionToPostfix(input);
-            int result = computePostfixExpression(postfixExpression);
-            System.out.println(result);
+            if (inputContainsBigInteger(input)) {
+                BigInteger result = computePostfixExpressionBigInt(postfixExpression);
+                System.out.println(result);
+            } else {
+                int result = computePostfixExpressionInt(postfixExpression);
+                System.out.println(result);
+            }
         } catch (EmptyStackException e) {
             System.out.println("Invalid expression");
         }
@@ -232,7 +293,7 @@ public class Main {
         return output.toString();
     }
 
-    private static int computePostfixExpression(String expression) {
+    private static int computePostfixExpressionInt(String expression) {
         Stack<Integer> numbers = new Stack<>();
         String[] splitExpression = expression.split(" ");
 
@@ -256,6 +317,40 @@ public class Main {
                         break;
                     case "/":
                         result = lhs / rhs;
+                        break;
+                }
+
+                numbers.push(result);
+            }
+        }
+
+        return numbers.pop();
+    }
+
+    private static BigInteger computePostfixExpressionBigInt(String expression) {
+        Stack<BigInteger> numbers = new Stack<>();
+        String[] splitExpression = expression.split(" ");
+
+        for (String op : splitExpression) {
+            if (isDigit(op)) {
+                numbers.push(new BigInteger(op));
+            } else {
+                BigInteger rhs = numbers.pop();
+                BigInteger lhs = numbers.pop();
+                BigInteger result = BigInteger.ZERO;
+
+                switch(op) {
+                    case "+":
+                        result = lhs.add(rhs);
+                        break;
+                    case "-":
+                        result = lhs.subtract(rhs);
+                        break;
+                    case "*":
+                        result = lhs.multiply(rhs);
+                        break;
+                    case "/":
+                        result = lhs.divide(rhs);
                         break;
                 }
 
